@@ -30,6 +30,23 @@ public class StyleClassedTextArea extends StyledTextArea<Collection<String>, Col
                 Codec.styledTextCodec(Codec.collectionCodec(Codec.STRING_CODEC))
         );
     }
+    public StyleClassedTextArea(@NamedArg("document") EditableStyledDocument<Collection<String>, String, Collection<String>> document,
+                                @NamedArg("preserveStyle") boolean preserveStyle,
+                                @NamedArg("behaviorParameters") GenericStyledAreaBehaviorParameters behaviorParameters) {
+        super(Collections.<String>emptyList(),
+                (paragraph, styleClasses) -> paragraph.getStyleClass().addAll(styleClasses),
+                Collections.<String>emptyList(),
+                (text, styleClasses) -> text.getStyleClass().addAll(styleClasses),
+                document, preserveStyle,
+                behaviorParameters
+        );
+
+        setStyleCodecs(
+                Codec.collectionCodec(Codec.STRING_CODEC),
+                Codec.styledTextCodec(Codec.collectionCodec(Codec.STRING_CODEC))
+        );
+    }
+
     public StyleClassedTextArea(@NamedArg("preserveStyle") boolean preserveStyle) {
         this(
                 new SimpleEditableStyledDocument<>(
@@ -37,11 +54,27 @@ public class StyleClassedTextArea extends StyledTextArea<Collection<String>, Col
                 ), preserveStyle);
     }
 
+    public StyleClassedTextArea(@NamedArg("preserveStyle") boolean preserveStyle,
+                                @NamedArg("behaviorParameters") GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(
+                new SimpleEditableStyledDocument<>(
+                    Collections.<String>emptyList(), Collections.<String>emptyList()
+                ), preserveStyle,
+                behaviorParameters);
+    }
+
     /**
      * Creates a text area with empty text content.
      */
     public StyleClassedTextArea() {
         this(true);
+    }
+
+    /**
+     * Creates a text area with empty text content.
+     */
+    public StyleClassedTextArea(@NamedArg("behaviorParameters") GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(true, behaviorParameters);
     }
 
     /**

@@ -1,49 +1,16 @@
 package org.fxmisc.richtext;
 
-import static org.reactfx.EventStreams.*;
-import static org.reactfx.util.Tuples.*;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.function.IntSupplier;
-import java.util.function.IntUnaryOperator;
-import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
-
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.beans.NamedArg;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
-import javafx.css.CssMetaData;
-import javafx.css.PseudoClass;
-import javafx.css.StyleConverter;
-import javafx.css.Styleable;
-import javafx.css.StyleableObjectProperty;
+import javafx.css.*;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
+import javafx.geometry.*;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.IndexRange;
@@ -58,42 +25,26 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.TextFlow;
-
-import org.fxmisc.flowless.Cell;
-import org.fxmisc.flowless.VirtualFlow;
-import org.fxmisc.flowless.VirtualFlowHit;
-import org.fxmisc.flowless.Virtualized;
-import org.fxmisc.flowless.VirtualizedScrollPane;
-import org.fxmisc.richtext.model.Codec;
-import org.fxmisc.richtext.model.EditableStyledDocument;
-import org.fxmisc.richtext.model.GenericEditableStyledDocument;
-import org.fxmisc.richtext.model.Paragraph;
-import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
-import org.fxmisc.richtext.model.PlainTextChange;
-import org.fxmisc.richtext.model.Replacement;
-import org.fxmisc.richtext.model.RichTextChange;
-import org.fxmisc.richtext.model.StyleSpans;
-import org.fxmisc.richtext.model.StyledDocument;
-import org.fxmisc.richtext.model.StyledSegment;
-import org.fxmisc.richtext.model.TextOps;
-import org.fxmisc.richtext.model.TwoDimensional;
-import org.fxmisc.richtext.model.TwoLevelNavigator;
+import org.fxmisc.flowless.*;
 import org.fxmisc.richtext.event.MouseOverTextEvent;
+import org.fxmisc.richtext.model.*;
 import org.fxmisc.richtext.util.SubscribeableContentsObsSet;
 import org.fxmisc.richtext.util.UndoUtils;
 import org.fxmisc.undo.UndoManager;
-import org.reactfx.EventStream;
-import org.reactfx.EventStreams;
-import org.reactfx.Guard;
-import org.reactfx.Subscription;
-import org.reactfx.Suspendable;
-import org.reactfx.SuspendableEventStream;
-import org.reactfx.SuspendableNo;
+import org.reactfx.*;
 import org.reactfx.collection.LiveList;
 import org.reactfx.collection.SuspendableList;
 import org.reactfx.util.Tuple2;
 import org.reactfx.value.Val;
 import org.reactfx.value.Var;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.function.*;
+
+import static org.reactfx.EventStreams.invalidationsOf;
+import static org.reactfx.EventStreams.merge;
+import static org.reactfx.util.Tuples.t;
 
 /**
  * Text editing control that renders and edits a {@link EditableStyledDocument}.
@@ -376,7 +327,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
     private final ObjectProperty<IntFunction<? extends Node>> paragraphGraphicFactory = new SimpleObjectProperty<>(null);
     @Override public ObjectProperty<IntFunction<? extends Node>> paragraphGraphicFactoryProperty() { return paragraphGraphicFactory; }
-    
+
     public void recreateParagraphGraphic( int parNdx ) {
         ObjectProperty<IntFunction<? extends Node>> gProp;
         gProp = getCell(parNdx).graphicFactoryProperty();
@@ -398,7 +349,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
     public final ObjectProperty<Node> placeholderProperty() { return placeHolderProp; }
     public final Node getPlaceholder() { return placeHolderProp.get(); }
     private Pos placeHolderPos = Pos.CENTER;
-    
+
     private ObjectProperty<ContextMenu> contextMenu = new SimpleObjectProperty<>(null);
     @Override public final ObjectProperty<ContextMenu> contextMenuObjectProperty() { return contextMenu; }
     // Don't remove as FXMLLoader doesn't recognise default methods !
@@ -663,6 +614,31 @@ public class GenericStyledArea<PS, SEG, S> extends Region
     }
 
     /**
+     * Creates a text area with empty text content.
+     *
+     * @param initialParagraphStyle style to use in places where no other style is
+     * specified (yet).
+     * @param applyParagraphStyle function that, given a {@link TextFlow} node and
+     * a style, applies the style to the paragraph node. This function is
+     * used by the default skin to apply style to paragraph nodes.
+     * @param initialTextStyle style to use in places where no other style is
+     * specified (yet).
+     * @param segmentOps The operations which are defined on the text segment objects.
+     * @param nodeFactory A function which is used to create the JavaFX scene nodes for a
+     *        particular segment.
+     * @param behaviorParameters the configuration parameters of the behavior of this area.
+     */
+    public GenericStyledArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+                             @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+                             @NamedArg("initialTextStyle")      S initialTextStyle,
+                             @NamedArg("segmentOps")            TextOps<SEG, S> segmentOps,
+                             @NamedArg("nodeFactory")           Function<StyledSegment<SEG, S>, Node> nodeFactory,
+                             @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(initialParagraphStyle, applyParagraphStyle, initialTextStyle, segmentOps,
+                true, nodeFactory, behaviorParameters);
+    }
+
+    /**
      * Same as {@link #GenericStyledArea(Object, BiConsumer, Object, TextOps, Function)} but also allows one
      * to specify whether the undo manager should be a plain or rich undo manager via {@code preserveStyle}.
      *
@@ -683,7 +659,35 @@ public class GenericStyledArea<PS, SEG, S> extends Region
                              @NamedArg("preserveStyle")         boolean preserveStyle,
                              @NamedArg("nodeFactory")           Function<StyledSegment<SEG, S>, Node> nodeFactory) {
         this(initialParagraphStyle, applyParagraphStyle, initialTextStyle,
-                new GenericEditableStyledDocument<>(initialParagraphStyle, initialTextStyle, segmentOps), segmentOps, preserveStyle, nodeFactory);
+                new GenericEditableStyledDocument<>(initialParagraphStyle, initialTextStyle, segmentOps), segmentOps,
+                preserveStyle, nodeFactory, new GenericStyledAreaBehaviorParameters());
+    }
+
+    /**
+     * Same as {@link #GenericStyledArea(Object, BiConsumer, Object, TextOps, Function)} but also allows one
+     * to specify whether the undo manager should be a plain or rich undo manager via {@code preserveStyle}.
+     *
+     * @param initialParagraphStyle style to use in places where no other style is specified (yet).
+     * @param applyParagraphStyle function that, given a {@link TextFlow} node and
+     *                            a style, applies the style to the paragraph node. This function is
+     *                            used by the default skin to apply style to paragraph nodes.
+     * @param initialTextStyle style to use in places where no other style is specified (yet).
+     * @param segmentOps The operations which are defined on the text segment objects.
+     * @param preserveStyle whether to use an undo manager that can undo/redo {@link RichTextChange}s or
+     *                      {@link PlainTextChange}s
+     * @param nodeFactory A function which is used to create the JavaFX scene node for a particular segment.
+     * @param behaviorParameters the configuration parameters of the behavior of this area.
+     */
+    public GenericStyledArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+                             @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+                             @NamedArg("initialTextStyle")      S initialTextStyle,
+                             @NamedArg("segmentOps")            TextOps<SEG, S> segmentOps,
+                             @NamedArg("preserveStyle")         boolean preserveStyle,
+                             @NamedArg("nodeFactory")           Function<StyledSegment<SEG, S>, Node> nodeFactory,
+                             @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(initialParagraphStyle, applyParagraphStyle, initialTextStyle,
+                new GenericEditableStyledDocument<>(initialParagraphStyle, initialTextStyle, segmentOps), segmentOps,
+                preserveStyle, nodeFactory, behaviorParameters);
     }
 
     /**
@@ -698,7 +702,26 @@ public class GenericStyledArea<PS, SEG, S> extends Region
             @NamedArg("document")              EditableStyledDocument<PS, SEG, S> document,
             @NamedArg("segmentOps")            TextOps<SEG, S> segmentOps,
             @NamedArg("nodeFactory")           Function<StyledSegment<SEG, S>, Node> nodeFactory) {
-        this(initialParagraphStyle, applyParagraphStyle, initialTextStyle, document, segmentOps, true, nodeFactory);
+        this(initialParagraphStyle, applyParagraphStyle, initialTextStyle, document, segmentOps,
+                true, nodeFactory, new GenericStyledAreaBehaviorParameters());
+
+    }
+
+    /**
+     * The same as {@link #GenericStyledArea(Object, BiConsumer, Object, TextOps, Function)} except that
+     * this constructor can be used to create another {@code GenericStyledArea} that renders and edits the same
+     * {@link EditableStyledDocument} or when one wants to use a custom {@link EditableStyledDocument} implementation.
+     */
+    public GenericStyledArea(
+            @NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+            @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+            @NamedArg("initialTextStyle")      S initialTextStyle,
+            @NamedArg("document")              EditableStyledDocument<PS, SEG, S> document,
+            @NamedArg("segmentOps")            TextOps<SEG, S> segmentOps,
+            @NamedArg("nodeFactory")           Function<StyledSegment<SEG, S>, Node> nodeFactory,
+            @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(initialParagraphStyle, applyParagraphStyle, initialTextStyle, document, segmentOps,
+                true, nodeFactory, behaviorParameters);
 
     }
 
@@ -715,6 +738,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
      * @param preserveStyle whether to use an undo manager that can undo/redo {@link RichTextChange}s or
      *                      {@link PlainTextChange}s
      * @param nodeFactory A function which is used to create the JavaFX scene node for a particular segment.
+     * @param behaviorParameters the configuration parameters of the behavior of this area.
      */
     public GenericStyledArea(
             @NamedArg("initialParagraphStyle") PS initialParagraphStyle,
@@ -723,7 +747,8 @@ public class GenericStyledArea<PS, SEG, S> extends Region
             @NamedArg("document")              EditableStyledDocument<PS, SEG, S> document,
             @NamedArg("segmentOps")            TextOps<SEG, S> segmentOps,
             @NamedArg("preserveStyle")         boolean preserveStyle,
-            @NamedArg("nodeFactory")           Function<StyledSegment<SEG, S>, Node> nodeFactory) {
+            @NamedArg("nodeFactory")           Function<StyledSegment<SEG, S>, Node> nodeFactory,
+            @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
         this.initialTextStyle = initialTextStyle;
         this.initialParagraphStyle = initialParagraphStyle;
         this.preserveStyle = preserveStyle;
@@ -815,7 +840,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
                         : EventStreams.never())
                 .subscribe(evt -> Event.fireEvent(this, evt));
 
-        new GenericStyledAreaBehavior(this);
+        new GenericStyledAreaBehavior(this, behaviorParameters);
 
         // Setup place holder visibility & placement 
         final Val<Boolean> showPlaceholder = Val.create
@@ -826,11 +851,11 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
         placeHolderProp.addListener( (ob,ov,newNode) -> displayPlaceHolder( showPlaceholder.getValue(), newNode ) );
         showPlaceholder.addListener( (ob,ov,show) -> displayPlaceHolder( show, getPlaceholder() ) );
-        
+
         if ( Platform.isFxApplicationThread() ) initInputMethodHandling();
         else Platform.runLater( () -> initInputMethodHandling() );
     }
-    
+
     private void initInputMethodHandling()
     {
         if( Platform.isSupported( ConditionalFeature.INPUT_METHOD ) )
@@ -840,10 +865,11 @@ public class GenericStyledArea<PS, SEG, S> extends Region
             setInputMethodRequests( new InputMethodRequests()
             {
                 @Override public Point2D getTextLocation( int offset ) {
-                    return getCaretBounds()
-                   	    .or( () -> getCharacterBoundsOnScreen( offset, offset ) )
-                   	    .map( cb -> new Point2D( cb.getMaxX() - 5, cb.getMaxY() ) )
-                   	    .orElseGet( () -> new Point2D( 10,10 ) );
+                    Optional<Bounds> optional = getCaretBounds();
+                    if(!optional.isPresent()) optional = getCharacterBoundsOnScreen(offset, offset);
+
+                    return optional.map( cb -> new Point2D( cb.getMaxX() - 5, cb.getMaxY() ) )
+                            .orElseGet( () -> new Point2D( 10,10 ) );
                 }
 
                 @Override public int getLocationOffset( int x, int y ) {
@@ -962,7 +988,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         List<Cell<Paragraph<PS, SEG, S>, ParagraphBox<PS, SEG, S>>> visibleList = virtualFlow.visibleCells();
         int firstVisibleParIndex = visibleList.get( 0 ).getNode().getIndex();
         int targetIndex = allParIndex - firstVisibleParIndex;
-        
+
         if ( allParIndex >= firstVisibleParIndex && targetIndex < visibleList.size() )
         {
             if ( visibleList.get( targetIndex ).getNode().getIndex() == allParIndex )
@@ -1047,7 +1073,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
             if ( cursorBounds != null && ! cursorBounds.isEmpty() )
             {
-                Bounds emptyCharBounds = new BoundingBox( 
+                Bounds emptyCharBounds = new BoundingBox(
                     cursorBounds.getMinX()+1, cursorBounds.getMinY()+1,
                     cursorBounds.getWidth()-1, cursorBounds.getHeight()-2
                 );
@@ -1309,11 +1335,11 @@ public class GenericStyledArea<PS, SEG, S> extends Region
     public int getCurrentLineEndInParargraph() {
         return virtualFlow.getCell(getCurrentParagraph()).getNode().getCurrentLineEndPosition(caretSelectionBind.getUnderlyingCaret());
     }
-    
+
     private double caretPrevY = -1;
     private LineSelection<PS, SEG, S> lineHighlighter;
-    private ObjectProperty<Paint> lineHighlighterFill; 
-    
+    private ObjectProperty<Paint> lineHighlighterFill;
+
     /**
      * The default fill is "highlighter" yellow. It can also be styled using CSS with:<br>
      * <code>.styled-text-area .line-highlighter { -fx-fill: lime; }</code><br>
@@ -1327,18 +1353,18 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         else {
             boolean lineHighlightOn = isLineHighlighterOn();
             if ( lineHighlightOn ) setLineHighlighterOn( false );
-            
+
             if ( highlight == null ) lineHighlighterFill = null;
             else lineHighlighterFill = new SimpleObjectProperty( highlight );
-            
+
             if ( lineHighlightOn ) setLineHighlighterOn( true );
         }
     }
-    
+
     public boolean isLineHighlighterOn() {
         return lineHighlighter != null && selectionSet.contains( lineHighlighter ) ;
     }
-    
+
     /**
      * Highlights the line that the main caret is on.<br>
      * Line highlighting automatically follows the caret.
@@ -1348,17 +1374,17 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         if ( show )
         {
             if ( lineHighlighter != null ) return;
-            
+
             lineHighlighter = new LineSelection<>( this, lineHighlighterFill );
-            
-            Consumer<Bounds> caretListener = b -> 
+
+            Consumer<Bounds> caretListener = b ->
             {
                 if ( lineHighlighter != null && (b.getMinY() != caretPrevY || getCaretColumn() == 1) ) {
                     lineHighlighter.selectCurrentLine();
                     caretPrevY = b.getMinY();
                 }
             };
-            
+
             caretBoundsProperty().addListener( (ob,ov,nv) -> nv.ifPresent( caretListener ) );
             getCaretBounds().ifPresent( caretListener );
             selectionSet.add( lineHighlighter );
@@ -1388,7 +1414,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         }
         else page( +1, selectionPolicy );
     }
-    
+
     /**
      * @param pgCount the number of pages to page up/down.
      * <br>Negative numbers for paging up and positive for down.
@@ -1397,7 +1423,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
     {
         // Use underlying caret to get the same behaviour as navigating up/down a line where the x position is sticky
         Optional<Bounds> cb = caretSelectionBind.getUnderlyingCaret().getCaretBounds();
-    	
+
         paging = true; // Prevent scroll from reverting back to the current caret position
         scrollYBy( pgCount * getViewportHeight() );
 
@@ -1407,7 +1433,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
         // Adjust scroll by a few pixels to get the caret at the exact on screen location as before 
         cb.ifPresent( prev -> getCaretBounds().map( newB -> newB.getMinY() - prev.getMinY() )
-            .filter( delta -> delta != 0.0 ).ifPresent( delta -> scrollYBy( delta ) ) ); 
+            .filter( delta -> delta != 0.0 ).ifPresent( delta -> scrollYBy( delta ) ) );
     }
 
     @Override
