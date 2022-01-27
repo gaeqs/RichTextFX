@@ -112,8 +112,6 @@ javadoc {
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
-test.onlyIf { !project.hasProperty('noTests') }
-
 test {
     testLogging {
         // Fancy formatting from http://stackoverflow.com/a/36130467/3634630
