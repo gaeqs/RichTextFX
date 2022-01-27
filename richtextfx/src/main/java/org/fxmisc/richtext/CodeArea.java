@@ -31,10 +31,25 @@ public class CodeArea extends StyleClassedTextArea {
     }
 
     /**
+     * Creates an area that can render and edit the same {@link EditableStyledDocument} as another {@link CodeArea}.
+     */
+    public CodeArea(@NamedArg("document") EditableStyledDocument<Collection<String>, String, Collection<String>> document,
+                    @NamedArg("behaviorParameters") GenericStyledAreaBehaviorParameters behaviorParametersv) {
+        super(document, false, behaviorParametersv);
+    }
+
+    /**
      * Creates an area with no text.
      */
     public CodeArea() {
         super(false);
+    }
+
+    /**
+     * Creates an area with no text.
+     */
+    public CodeArea(@NamedArg("behaviorParameters") GenericStyledAreaBehaviorParameters behaviorParameters) {
+        super(false, behaviorParameters);
     }
 
     /**

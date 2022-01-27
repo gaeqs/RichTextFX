@@ -98,9 +98,20 @@ public abstract class StyledTextField<PS, S> extends StyledTextArea<PS, S>
             @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
             @NamedArg("initialTextStyle")      S initialTextStyle,
             @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle,
-            @NamedArg("document")              EditableStyledDocument<PS, String, S> document)
+            @NamedArg("document")              EditableStyledDocument<PS, String, S> document) {
+        this(initialParagraphStyle, applyParagraphStyle, initialTextStyle, applyStyle, document,
+                new GenericStyledAreaBehaviorParameters());
+    }
+
+    public StyledTextField(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+            @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+            @NamedArg("initialTextStyle")      S initialTextStyle,
+            @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle,
+            @NamedArg("document")              EditableStyledDocument<PS, String, S> document,
+            @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters)
     {
-        super( initialParagraphStyle, applyParagraphStyle, initialTextStyle, applyStyle, document, true );
+        super( initialParagraphStyle, applyParagraphStyle, initialTextStyle, applyStyle, document,
+                true, behaviorParameters );
 
         getStylesheets().add( STYLE_SHEET );
         getStyleClass().setAll( "styled-text-field" );

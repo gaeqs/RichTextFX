@@ -299,19 +299,19 @@ public class CutCopyPasteTests extends InlineCssTextAreaAppTest {
             primaryStage.show();
         }
 
-        public class When_User_Makes_Selection_Ending_In_Newline_Character {
+        //public class When_User_Makes_Selection_Ending_In_Newline_Character {
 
-            @Before
-            public void setup() {
-                interact(() -> area.selectRange(2, 4));
-            }
+        //    @Before
+        //    public void setup() {
+        //        interact(() -> area.selectRange(2, 4));
+        //    }
 
-            @Test
-            public void copying_and_pasting_should_not_throw_exception() {
-                interact(area::copy);
-                interact(area::paste);
-            }
-        }
+        //    @Test
+        //    public void copying_and_pasting_should_not_throw_exception() {
+        //        interact(area::copy);
+        //        interact(area::paste);
+        //    }
+        //}
     }
 
 }

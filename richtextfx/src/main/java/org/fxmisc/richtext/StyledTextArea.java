@@ -29,10 +29,12 @@ public class StyledTextArea<PS, S> extends GenericStyledArea<PS, String, S> {
                           @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle,
                           @NamedArg("document")              EditableStyledDocument<PS, String, S> document,
                           @NamedArg("segmentOps")            TextOps<String, S> segmentOps,
-                          @NamedArg("preserveStyle")         boolean preserveStyle) {
+                          @NamedArg("preserveStyle")         boolean preserveStyle,
+                          @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
         super(initialParagraphStyle, applyParagraphStyle,
                 initialTextStyle, document, segmentOps, preserveStyle,
-                seg -> createStyledTextNode(seg, applyStyle)
+                seg -> createStyledTextNode(seg, applyStyle),
+                behaviorParameters
         );
     }
 
@@ -44,7 +46,19 @@ public class StyledTextArea<PS, S> extends GenericStyledArea<PS, String, S> {
                           @NamedArg("preserveStyle")         boolean preserveStyle) {
         this(initialParagraphStyle, applyParagraphStyle,
               initialTextStyle, applyStyle,
-              document, SegmentOps.styledTextOps(), preserveStyle);
+              document, SegmentOps.styledTextOps(), preserveStyle, new GenericStyledAreaBehaviorParameters());
+    }
+
+    public StyledTextArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+                          @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+                          @NamedArg("initialTextStyle")      S initialTextStyle,
+                          @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle,
+                          @NamedArg("document")              EditableStyledDocument<PS, String, S> document,
+                          @NamedArg("preserveStyle")         boolean preserveStyle,
+                          @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(initialParagraphStyle, applyParagraphStyle,
+              initialTextStyle, applyStyle,
+              document, SegmentOps.styledTextOps(), preserveStyle, behaviorParameters);
     }
 
     public StyledTextArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
@@ -54,6 +68,15 @@ public class StyledTextArea<PS, S> extends GenericStyledArea<PS, String, S> {
                           @NamedArg("document")              EditableStyledDocument<PS, String, S> document) {
         this(initialParagraphStyle, applyParagraphStyle,
              initialTextStyle, applyStyle, document, true);
+    }
+    public StyledTextArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+                          @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+                          @NamedArg("initialTextStyle")      S initialTextStyle,
+                          @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle,
+                          @NamedArg("document")              EditableStyledDocument<PS, String, S> document,
+                          @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(initialParagraphStyle, applyParagraphStyle,
+             initialTextStyle, applyStyle, document, true, behaviorParameters);
     }
 
     public StyledTextArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
@@ -73,9 +96,34 @@ public class StyledTextArea<PS, S> extends GenericStyledArea<PS, String, S> {
     public StyledTextArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
                           @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
                           @NamedArg("initialTextStyle")      S initialTextStyle,
+                          @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle,
+                          @NamedArg("preserveStyle")         boolean preserveStyle,
+                          @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(
+                initialParagraphStyle,
+                applyParagraphStyle,
+                initialTextStyle,
+                applyStyle,
+                new SimpleEditableStyledDocument<>(initialParagraphStyle, initialTextStyle),
+                preserveStyle,
+                behaviorParameters);
+    }
+
+    public StyledTextArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+                          @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+                          @NamedArg("initialTextStyle")      S initialTextStyle,
                           @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle) {
         this(initialParagraphStyle, applyParagraphStyle,
              initialTextStyle, applyStyle, true);
+    }
+
+    public StyledTextArea(@NamedArg("initialParagraphStyle") PS initialParagraphStyle,
+                          @NamedArg("applyParagraphStyle")   BiConsumer<TextFlow, PS> applyParagraphStyle,
+                          @NamedArg("initialTextStyle")      S initialTextStyle,
+                          @NamedArg("applyStyle")            BiConsumer<? super TextExt, S> applyStyle,
+                          @NamedArg("behaviorParameters")    GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(initialParagraphStyle, applyParagraphStyle,
+             initialTextStyle, applyStyle, true, behaviorParameters);
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.fxmisc.richtext;
 
+import javafx.beans.NamedArg;
 import org.fxmisc.richtext.model.SimpleEditableStyledDocument;
 
 import javafx.scene.text.TextAlignment;
@@ -15,9 +16,21 @@ public class InlineCssTextField extends StyledTextField<String,String>
     public InlineCssTextField() {
         super( "", TextFlow::setStyle, "", TextExt::setStyle, new SimpleEditableStyledDocument<>("", "") );
     }
-    
+
+    public InlineCssTextField(GenericStyledAreaBehaviorParameters behaviorParameters) {
+        super( "", TextFlow::setStyle, "", TextExt::setStyle,
+                new SimpleEditableStyledDocument<>("", ""), behaviorParameters);
+    }
+
     public InlineCssTextField( String text ) {
         this(); replaceText( text );
+        getUndoManager().forgetHistory();
+        getUndoManager().mark();
+    }
+
+    public InlineCssTextField( String text, GenericStyledAreaBehaviorParameters behaviorParameters ) {
+        this(behaviorParameters);
+        replaceText( text );
         getUndoManager().forgetHistory();
         getUndoManager().mark();
     }

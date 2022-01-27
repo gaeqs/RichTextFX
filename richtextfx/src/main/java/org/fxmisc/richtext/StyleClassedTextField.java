@@ -3,6 +3,7 @@ package org.fxmisc.richtext;
 import java.util.Collection;
 import java.util.Collections;
 
+import javafx.beans.NamedArg;
 import org.fxmisc.richtext.model.SimpleEditableStyledDocument;
 
 import javafx.scene.text.TextAlignment;
@@ -24,8 +25,26 @@ public class StyleClassedTextField extends StyledTextField<Collection<String>, C
         );
     }
 
+ public StyleClassedTextField( GenericStyledAreaBehaviorParameters behaviorParameters) {
+        super(
+            Collections.<String>emptyList(),
+            (paragraph, styleClasses) -> paragraph.getStyleClass().addAll(styleClasses),
+            Collections.<String>emptyList(),
+            (text, styleClasses) -> text.getStyleClass().addAll(styleClasses),
+            new SimpleEditableStyledDocument<>( Collections.<String>emptyList(), Collections.<String>emptyList() ),
+            behaviorParameters
+        );
+    }
+
     public StyleClassedTextField( String text ) {
         this(); replaceText( text );
+        getUndoManager().forgetHistory();
+        getUndoManager().mark();
+    }
+
+    public StyleClassedTextField( String text, GenericStyledAreaBehaviorParameters behaviorParameters ) {
+        this(behaviorParameters);
+        replaceText( text );
         getUndoManager().forgetHistory();
         getUndoManager().mark();
     }
