@@ -67,6 +67,24 @@ public class CodeArea extends StyleClassedTextArea {
         // position the caret at the beginning
         selectRange(0, 0);
     }
+
+    /**
+     * Creates a text area with initial text content.
+     * Initial caret position is set at the beginning of text content.
+     *
+     * @param text Initial text content.
+     */
+    public CodeArea(@NamedArg("text") String text,
+                    @NamedArg("behaviorParameters") GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(behaviorParameters);
+
+        appendText(text);
+        getUndoManager().forgetHistory();
+        getUndoManager().mark();
+
+        // position the caret at the beginning
+        selectRange(0, 0);
+    }
     
     @Override // to select words containing underscores
     public void selectWord()
