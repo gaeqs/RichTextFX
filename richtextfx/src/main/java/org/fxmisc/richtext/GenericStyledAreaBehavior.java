@@ -469,9 +469,6 @@ class GenericStyledAreaBehavior {
                 // tab & newline
                 consume(keyPressed(ENTER), (b, e) -> b.view.replaceSelection("\n")),
                 consume(keyPressed(TAB), (b, e) -> b.view.replaceSelection("\t")),
-                consume(
-                        anyOf(keyPressed(SHORTCUT_Y), keyPressed(SHORTCUT_SHIFT_Z)),
-                        (b, e) -> b.view.redo()),
                 // insert/overwrite
                 consume(keyPressed(INSERT), GenericStyledAreaBehavior::toggelOverwriteMode)
         );
