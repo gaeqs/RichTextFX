@@ -69,6 +69,24 @@ public class CodeArea extends StyleClassedTextArea {
         selectRange(0, 0);
     }
 
+    /**
+     * Creates a text area with initial text content.
+     * Initial caret position is set at the beginning of text content.
+     *
+     * @param text Initial text content.
+     */
+    public CodeArea(@NamedArg("text") String text,
+                    @NamedArg("behaviorParameters") GenericStyledAreaBehaviorParameters behaviorParameters) {
+        this(behaviorParameters);
+
+        appendText(text);
+        getUndoManager().forgetHistory();
+        getUndoManager().mark();
+
+        // position the caret at the beginning
+        selectRange(0, 0);
+    }
+
     protected Pattern WORD_PATTERN = Pattern.compile( "\\w+", Pattern.UNICODE_CHARACTER_CLASS );
     protected Pattern WORD_OR_SYMBOL = Pattern.compile(
             "([\\W&&[^\\h]]{2}"    // Any two non-word characters (excluding white spaces), matches like:
@@ -89,7 +107,7 @@ public class CodeArea extends StyleClassedTextArea {
 
         CaretSelectionBind<?,?,?> csb = getCaretSelectionBind();
         int paragraph = csb.getParagraphIndex();
-        int position = csb.getColumnPosition(); 
+        int position = csb.getColumnPosition();
         int prevWord = 0;
 
         if ( position == 0 ) {
@@ -97,9 +115,9 @@ public class CodeArea extends StyleClassedTextArea {
             moveTo( paragraph, prevWord, selectionPolicy );
             return;
         }
-        
+
         Matcher m = WORD_OR_SYMBOL.matcher( getText( paragraph ) );
-        
+
         while ( m.find() )
         {
             if ( m.start() == position ) {
@@ -112,7 +130,7 @@ public class CodeArea extends StyleClassedTextArea {
             }
         }
     }
-    
+
     /**
      * Skips ONLY 1 number of word boundaries forward.
      * @param n is ignored !
@@ -124,10 +142,10 @@ public class CodeArea extends StyleClassedTextArea {
 
         CaretSelectionBind<?,?,?> csb = getCaretSelectionBind();
         int paragraph = csb.getParagraphIndex();
-        int position = csb.getColumnPosition(); 
-        
+        int position = csb.getColumnPosition();
+
         Matcher m = WORD_OR_SYMBOL.matcher( getText( paragraph ) );
-        
+
         while ( m.find() )
         {
             if ( m.start() > position ) {
@@ -139,7 +157,7 @@ public class CodeArea extends StyleClassedTextArea {
             }
         }
     }
-    
+
     @Override
     public void selectWord()
     {
