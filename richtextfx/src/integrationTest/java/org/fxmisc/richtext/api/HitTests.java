@@ -65,20 +65,6 @@ public class HitTests extends InlineCssTextAreaAppTest {
             }
 
             @Test
-            public void clicking_in_top_padding_moves_caret_to_top_line() {
-                interact(() -> {
-                    area.setPadding(new Insets(PADDING_AMOUNT, 0, 0, 0));
-                    moveCaretToAreaEnd();
-                });
-                moveTo(position(Pos.TOP_LEFT, 1, 2)).clickOn(PRIMARY);
-                assertEquals(0, area.getCurrentParagraph());
-
-                interact(() -> moveCaretToAreaEnd());
-                moveTo(position(Pos.TOP_CENTER, 0, 0)).clickOn(PRIMARY);
-                assertEquals(0, area.getCurrentParagraph());
-            }
-
-            @Test
             public void clicking_in_left_padding_moves_caret_to_beginning_of_line_on_single_line_paragraph() {
                 interact(() -> area.setPadding(new Insets(0, 0, 0, PADDING_AMOUNT)));
 

@@ -35,80 +35,52 @@ check.dependsOn integrationTest
 integrationTest.mustRunAfter test
 integrationTest.testClassesDirs = sourceSets.integrationTest.output.classesDirs
 
-sourceSets {
-   java9 {
-      java {
-         srcDirs = ['src/main/java9']
-      }
-   }
-}
-
 dependencies {
     api group: 'org.reactfx', name: 'reactfx', version: '2.0-M5'
     api group: 'org.fxmisc.undo', name: 'undofx', version: '2.1.1'
-    api group: 'org.fxmisc.flowless', name: 'flowless', version: '0.6.7'
+    api group: 'org.fxmisc.flowless', name: 'flowless', version: '0.7.2'
     api group: 'org.fxmisc.wellbehaved', name: 'wellbehavedfx', version: '0.3.3'
 
-    java9Implementation files(sourceSets.main.output.classesDirs) { builtBy compileJava }
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
-
-    integrationTestImplementation group: 'junit', name: 'junit', version: '4.12'
+    integrationTestImplementation group: 'junit', name: 'junit', version: '4.13.2'
     integrationTestImplementation group: 'com.nitorcreations', name: 'junit-runners', version: '1.2'
     integrationTestImplementation "org.testfx:testfx-core:4.0.16-alpha"
     integrationTestImplementation ("org.testfx:testfx-junit:4.0.15-alpha") {
         exclude(group: "junit", module: "junit")
     }
-    integrationTestImplementation "org.testfx:openjfx-monocle:8u76-b04"
-}
-
-compileJava {
-   if ( JavaVersion.current() == JavaVersion.VERSION_1_9 ) {
-      sourceCompatibility = 8
-      targetCompatibility = 8
-   }
-   options.deprecation = true
-}
-
-compileJava9Java {
-   onlyIf { JavaVersion.current() == JavaVersion.VERSION_1_9 }
-   sourceCompatibility = 9
-   targetCompatibility = 9
-   options.deprecation = true
 }
 
 jar {
-    into 'META-INF/versions/9', { from sourceSets.java9.output }
     manifest {
         attributes(
-            'Specification-Title': 'RichTextFX',
-            'Specification-Version': project.specificationVersion,
-            'Implementation-Title': 'RichTextFX',
-            'Implementation-Version': project.version,
-            'Automatic-Module-Name': 'org.fxmisc.richtext',
-            'Multi-Release': 'true')
+                'Specification-Title': 'RichTextFX',
+                'Specification-Version': project.specificationVersion,
+                'Implementation-Title': 'RichTextFX',
+                'Implementation-Version': project.version,
+                'Automatic-Module-Name': 'org.fxmisc.richtext')
     }
 }
 
 javadoc {
     // ignore missing Javadoc comments or tags
-    options.addStringOption('Xdoclint:all,-missing', '-quiet')
+    options.addBooleanOption('Xdoclint:all,-missing,-accessibility', true)
 
     // support for JavaFX properties
     options.addBooleanOption('javafx', true);
 
     options.links = [
-        // resolve links to Java and JavaFX Javadocs
-        'http://docs.oracle.com/javase/8/docs/api/',
-        'http://docs.oracle.com/javase/8/javafx/api/',
+            // resolve links to Java and JavaFX Javadocs
+            'https://docs.oracle.com/en/java/javase/11/docs/api/',
+            'https://openjfx.io/javadoc/11/',
 
-        // resolve links to ReactFX
-        'https://www.javadoc.io/doc/org.reactfx/reactfx/2.0-M5/',
+            // resolve links to ReactFX
+            'https://www.javadoc.io/doc/org.reactfx/reactfx/2.0-M5/',
 
-        // resolve links to FXMisc projects
-        'https://fxmisc.github.io/undo/javadoc/1.3.1/',
-        'https://fxmisc.github.io/flowless/javadoc/0.6/',
-        'https://fxmisc.github.io/wellbehaved/javadoc/0.3/'
+            // resolve links to FXMisc projects
+            'https://fxmisc.github.io/undo/javadoc/1.3.1/',
+            'https://fxmisc.github.io/flowless/javadoc/0.6/',
+            'https://fxmisc.github.io/wellbehaved/javadoc/0.3/'
     ]
 }
 
@@ -117,9 +89,6 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 test {
-    dependsOn jar
-    // run tests against jar in case it's a  multi-release jar
-    classpath = files(jar.archivePath, classpath) - sourceSets.main.output
     testLogging {
         // Fancy formatting from http://stackoverflow.com/a/36130467/3634630
         // set options for log level LIFECYCLE
@@ -149,9 +118,6 @@ test {
 }
 
 integrationTest {
-    dependsOn jar
-    // run tests against jar in case it's a  multi-release jar
-    classpath = files(jar.archivePath, classpath) - sourceSets.main.output
     testLogging {
         // Fancy formatting from http://stackoverflow.com/a/36130467/3634630
         // set options for log level LIFECYCLE
@@ -180,14 +146,14 @@ integrationTest {
     }
 }
 
-tasks.register('javadocJar', Jar) {
-    dependsOn javadoc
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
     from 'build/docs/javadoc'
 }
 
-tasks.register('sourcesJar', Jar) {
-    into 'java9', { from sourceSets.java9.allSource }
+task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
+    classifier = 'sources'
 }
 
 artifacts {
@@ -201,57 +167,57 @@ publish.onlyIf { doUploadArchives }
 
 if(doUploadArchives) {
     publishing {
-	    repositories {
-	        maven {
-	           def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-	           def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
-	           url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-	            credentials {
-	                username = "${sonatypeUsername}"
-	                password = "${sonatypePassword}"
-	            }
-	        }
-	    }
+        repositories {
+            maven {
+                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                credentials {
+                    username = "${sonatypeUsername}"
+                    password = "${sonatypePassword}"
+                }
+            }
+        }
         publications {
             richTextFX(MavenPublication) {
                 from components.java
                 artifact sourcesJar
                 artifact javadocJar
                 pom {
-	                name = 'RichTextFX'
-	                packaging = 'jar'
-	                description = 'Rich-text area for JavaFX'
-	                url = 'https://github.com/FXMisc/RichTextFX/#richtextfx'
-	           
-	                scm {
-	                    url = 'scm:git@github.com:FXMisc/RichTextFX.git'
-	                    connection = 'scm:git@github.com:FXMisc/RichTextFX.git'
-	                    developerConnection = 'scm:git@github.com:FXMisc/RichTextFX.git'
-	                }
-	           
-	                licenses {
-	                    license {
-	                        name = 'The BSD 2-Clause License'
-	                        url = 'http://opensource.org/licenses/BSD-2-Clause'
-	                        distribution = 'repo'
-	                    }
-	                    license {
-	                        name = 'GPLv2 with the Classpath Exception'
-	                        url = 'http://www.gnu.org/software/classpath/license.html'
-	                        distribution = 'repo'
-	                    }
-	                }
-	           
-	                developers {
-	                    developer {
-	                        name = 'Tomas Mikula'
-	                    }
-	                }
-	            }
+                    name = 'RichTextFX'
+                    packaging = 'jar'
+                    description = 'Rich-text area for JavaFX'
+                    url = 'https://github.com/FXMisc/RichTextFX/#richtextfx'
+
+                    scm {
+                        url = 'scm:git@github.com:FXMisc/RichTextFX.git'
+                        connection = 'scm:git@github.com:FXMisc/RichTextFX.git'
+                        developerConnection = 'scm:git@github.com:FXMisc/RichTextFX.git'
+                    }
+
+                    licenses {
+                        license {
+                            name = 'The BSD 2-Clause License'
+                            url = 'http://opensource.org/licenses/BSD-2-Clause'
+                            distribution = 'repo'
+                        }
+                        license {
+                            name = 'GPLv2 with the Classpath Exception'
+                            url = 'http://www.gnu.org/software/classpath/license.html'
+                            distribution = 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            name = 'Tomas Mikula'
+                        }
+                    }
+                }
             }
-		}
+        }
     }
-	
+
     signing {
         sign publishing.publications.richTextFX
     }
@@ -259,12 +225,13 @@ if(doUploadArchives) {
 
 task fatJar(type: Jar, dependsOn: classes) {
     archiveAppendix = 'fat'
-
-    manifest.attributes( 'Automatic-Module-Name': 'org.fxmisc.richtext',
-                         'Multi-Release': 'true' )
-    into 'META-INF/versions/9', { from sourceSets.java9.output }
+    manifest.attributes( 'Automatic-Module-Name': 'org.fxmisc.richtext' )
     from sourceSets.main.output
     from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    excludes = [ 'module-info.class',  // block module-info files from other jars
+                 '*.dll','javafx*','javafx/',   // block inclusion of javafx files
+                 'com/'                         // block com/sun/* files
+    ]
 }
 
 assemble.dependsOn fatJar
