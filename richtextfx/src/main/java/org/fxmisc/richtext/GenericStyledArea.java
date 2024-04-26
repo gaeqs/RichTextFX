@@ -327,7 +327,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
     private final ObjectProperty<IntFunction<? extends Node>> paragraphGraphicFactory = new SimpleObjectProperty<>(null);
     @Override public ObjectProperty<IntFunction<? extends Node>> paragraphGraphicFactoryProperty() { return paragraphGraphicFactory; }
-    
+
     public void recreateParagraphGraphic( int parNdx ) {
         ObjectProperty<IntFunction<? extends Node>> gProp;
         gProp = getCell(parNdx).graphicFactoryProperty();
@@ -349,7 +349,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
     public final ObjectProperty<Node> placeholderProperty() { return placeHolderProp; }
     public final Node getPlaceholder() { return placeHolderProp.get(); }
     private Pos placeHolderPos = Pos.CENTER;
-    
+
     private ObjectProperty<ContextMenu> contextMenu = new SimpleObjectProperty<>(null);
     @Override public final ObjectProperty<ContextMenu> contextMenuObjectProperty() { return contextMenu; }
     // Don't remove as FXMLLoader doesn't recognise default methods !
@@ -840,7 +840,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
                         : EventStreams.never())
                 .subscribe(evt -> Event.fireEvent(this, evt));
 
-        new GenericStyledAreaBehavior(this);
+        new GenericStyledAreaBehavior(this, behaviorParameters);
 
         // Setup place holder visibility & placement 
         final Val<Boolean> showPlaceholder = Val.create
@@ -988,7 +988,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         List<Cell<Paragraph<PS, SEG, S>, ParagraphBox<PS, SEG, S>>> visibleList = virtualFlow.visibleCells();
         int firstVisibleParIndex = visibleList.get( 0 ).getNode().getIndex();
         int targetIndex = allParIndex - firstVisibleParIndex;
-        
+
         if ( allParIndex >= firstVisibleParIndex && targetIndex < visibleList.size() )
         {
             if ( visibleList.get( targetIndex ).getNode().getIndex() == allParIndex )
@@ -1079,7 +1079,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
             if ( cursorBounds != null && ! cursorBounds.isEmpty() )
             {
-                Bounds emptyCharBounds = new BoundingBox( 
+                Bounds emptyCharBounds = new BoundingBox(
                     cursorBounds.getMinX()+1, cursorBounds.getMinY()+1,
                     cursorBounds.getWidth()-1, cursorBounds.getHeight()-2
                 );
@@ -1341,11 +1341,11 @@ public class GenericStyledArea<PS, SEG, S> extends Region
     public int getCurrentLineEndInParargraph() {
         return virtualFlow.getCell(getCurrentParagraph()).getNode().getCurrentLineEndPosition(caretSelectionBind.getUnderlyingCaret());
     }
-    
+
     private double caretPrevY = -1;
     private LineSelection<PS, SEG, S> lineHighlighter;
-    private ObjectProperty<Paint> lineHighlighterFill; 
-    
+    private ObjectProperty<Paint> lineHighlighterFill;
+
     /**
      * The default fill is "highlighter" yellow. It can also be styled using CSS with:<br>
      * <code>.styled-text-area .line-highlighter { -fx-fill: lime; }</code><br>
@@ -1359,18 +1359,18 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         else {
             boolean lineHighlightOn = isLineHighlighterOn();
             if ( lineHighlightOn ) setLineHighlighterOn( false );
-            
+
             if ( highlight == null ) lineHighlighterFill = null;
             else lineHighlighterFill = new SimpleObjectProperty( highlight );
-            
+
             if ( lineHighlightOn ) setLineHighlighterOn( true );
         }
     }
-    
+
     public boolean isLineHighlighterOn() {
         return lineHighlighter != null && selectionSet.contains( lineHighlighter ) ;
     }
-    
+
     /**
      * Highlights the line that the main caret is on.<br>
      * Line highlighting automatically follows the caret.
@@ -1380,10 +1380,10 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         if ( show )
         {
             if ( lineHighlighter != null ) return;
-            
+
             lineHighlighter = new LineSelection<>( this, lineHighlighterFill );
-            
-            Consumer<Bounds> caretListener = b -> 
+
+            Consumer<Bounds> caretListener = b ->
             {
                 if ( lineHighlighter != null && (b.getMinY() != caretPrevY || getCaretColumn() == 1) ) {
                     if ( getSelection().getLength() != 0 ) lineHighlighter.deselect();
@@ -1391,7 +1391,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
                     caretPrevY = b.getMinY();
                 }
             };
-            
+
             caretBoundsProperty().addListener( (ob,ov,nv) -> nv.ifPresent( caretListener ) );
             getCaretBounds().ifPresent( caretListener );
             selectionProperty().addListener( (ob,ov,nv) ->
@@ -1456,7 +1456,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
         }
         else page( +1, selectionPolicy );
     }
-    
+
     /**
      * @param pgCount the number of pages to page up/down.
      * <br>Negative numbers for paging up and positive for down.
@@ -1473,7 +1473,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
     {
         // Use underlying caret to get the same behaviour as navigating up/down a line where the x position is sticky
         Optional<Bounds> cb = caretSelectionBind.getUnderlyingCaret().getCaretBounds();
-    	
+
         paging = true; // Prevent scroll from reverting back to the current caret position
         suspendVisibleParsWhile( () -> virtualFlow.scrollYBy( deltaY ) );
 
@@ -1483,7 +1483,7 @@ public class GenericStyledArea<PS, SEG, S> extends Region
 
         // Adjust scroll by a few pixels to get the caret at the exact on screen location as before 
         cb.ifPresent( prev -> getCaretBounds().map( newB -> newB.getMinY() - prev.getMinY() )
-            .filter( delta -> delta != 0.0 ).ifPresent( delta -> scrollYBy( delta ) ) ); 
+            .filter( delta -> delta != 0.0 ).ifPresent( delta -> scrollYBy( delta ) ) );
     }
 
     @Override
